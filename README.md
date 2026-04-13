@@ -19,7 +19,7 @@ A secure REST API for managing patient records in a Primary Health Care center.
 
 ## 🔗 Live API
 
-https://your-app.onrender.com
+https://phc-backend-4q48.onrender.com/
 
 ## 📌 Endpoints
 
@@ -33,3 +33,11 @@ DELETE /api/patients/:id
 ## 🧪 Testing
 
 Use Postman to test endpoints with JWT token.
+
+## 🔑 How to Test
+
+1. Register user
+2. Login → get token
+3. Use token in Authorization header
+4. Create patient
+
