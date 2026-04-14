@@ -4,6 +4,9 @@ const express = require("express");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoute");
 const patientRoutes = require("./routes/patientRoute");
+const swaggerUi = require("swagger-ui-express");
+const swaggerSpec = require("./config/swagger");
+const cors = require("cors");
 
 dotenv.config();
 connectDB();
@@ -15,6 +18,7 @@ app.use(cors());
 app.use(express.json());
 app.use("/api/auth", authRoutes);
 app.use("/api/patients", patientRoutes);
+app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));
 
 //routes
 app.get("/", (req, res) => {
