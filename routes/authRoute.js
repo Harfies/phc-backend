@@ -9,7 +9,7 @@ const { deletePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/auth/register:
+ * /api/v1/auth/register:
  *   post:
  *     summary: Register a new doctor or nurse
  *     tags: [Auth]
@@ -36,29 +36,35 @@ const { deletePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/auth/login:
+ * /api/v1/auth/login:
  *   post:
  *     summary: Login user and get token
  *     tags: [Auth]
  *     requestBody:
  *       required: true
- *       content:
- *         application/json:
- *           schema:
- *             type: object
- *             properties:
- *               email:
- *                 type: string
- *               password:
- *                 type: string
  *     responses:
  *       200:
  *         description: Login successful
+ *         content:
+ *           application/json:
+ *             example:
+ *               message: Login successful
+ *               token: eyJhbGciOiJIUzI1NiIs...
+ *
+ *       400:
+ *         description: Invalid credentials
+ *         content:
+ *           application/json:
+ *             example:
+ *               msg: Invalid email or password
+ *
+ *       500:
+ *         description: Server error
  */
 
 /**
  * @swagger
- * /api/auth/users:
+ * /api/v1/auth/users:
  *   get:
  *     summary: Get all users
  *     tags: [Auth]

@@ -7,8 +7,20 @@ const options = {
     info: {
       title: "PHC API",
       version: "1.0.0",
-      description: "Primary Health Care Backend API",
+      description:
+        "A secure REST API for managing patient records in a Primary Health Care system. Supports authentication, role-based access, pagination, and file uploads.",
+      contact: {
+        name: "Afeez Akinsola",
+        email: "your@email.com",
+      },
     },
+    tags: [
+      {
+        name: "Auth",
+        description: "Authentication routes (register, login, users)",
+      },
+      { name: "Patients", description: "Patient management (CRUD operations)" },
+    ],
     servers: [
       {
         url: "https://phc-backend-4q48.onrender.com",
@@ -47,6 +59,19 @@ const options = {
             name: { type: "string" },
             email: { type: "string" },
             role: { type: "string", enum: ["doctor", "nurse"] },
+          },
+        },
+        ErrorResponse: {
+          type: "object",
+          properties: {
+            msg: { type: "string", example: "Error message" },
+          },
+        },
+
+        SuccessResponse: {
+          type: "object",
+          properties: {
+            message: { type: "string", example: "Operation successful" },
           },
         },
       },

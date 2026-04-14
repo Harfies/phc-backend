@@ -16,20 +16,35 @@ const { updatePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/patients:
+ * /api/v1/patients:
  *   get:
- *     summary: Get all patients (with pagination)
+ *     summary: Get all patients (paginated)
  *     tags: [Patients]
  *     security:
  *       - bearerAuth: []
  *     responses:
  *       200:
- *         description: List of patients
+ *         description: Patients fetched successfully
+ *         content:
+ *           application/json:
+ *             example:
+ *               total: 20
+ *               page: 1
+ *               pages: 4
+ *               count: 5
+ *               data: []
+ *
+ *       401:
+ *         description: No token provided
+ *         content:
+ *           application/json:
+ *             example:
+ *               msg: No token
  */
 
 /**
  * @swagger
- * /api/patients:
+ * /api/v1/patients:
  *   post:
  *     summary: Create a new patient
  *     tags: [Patients]
@@ -48,7 +63,7 @@ const { updatePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /api/v1/patients/{id}:
  *   get:
  *     summary: Get a single patient by ID
  *     tags: [Patients]
@@ -58,7 +73,7 @@ const { updatePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /api/v1/patients/{id}:
  *   put:
  *     summary: Update patient
  *     tags: [Patients]
@@ -68,7 +83,7 @@ const { updatePatientByName } = require("../controllers/patientController");
 
 /**
  * @swagger
- * /api/patients/{id}:
+ * /api/v1/patients/{id}:
  *   delete:
  *     summary: Delete patient (doctor only)
  *     tags: [Patients]
