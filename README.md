@@ -40,3 +40,10 @@ Use Postman to test endpoints with JWT token.
 2. Login → get token
 3. Use token in Authorization header
 4. Create patient
+
+## 🔑 How to Test
+
+1. Register user
+2. Login → get token
+3. Use token in Authorization header
+4. Create patient
