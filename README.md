@@ -47,3 +47,8 @@ Use Postman to test endpoints with JWT token.
 2. Login → get token
 3. Use token in Authorization header
 4. Create patient
+
+## 📄 API Documentation
+
+Live Swagger Docs:
+https://your-app.onrender.com/api-docs
