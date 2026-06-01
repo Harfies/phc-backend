@@ -128,6 +128,7 @@ Email notifications
 CI/CD pipeline (GitHub Actions)
 Automated testing (Jest + Supertest)
 Grafana dashboard integration
+
 👨‍💻 Author
 
 Afeez Akinsola
