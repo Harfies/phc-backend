@@ -1,5 +1,5 @@
 // entry point of the app
-const dotenv = require("dotenv");
+require("dotenv").config();
 const express = require("express");
 const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoute");
@@ -7,8 +7,14 @@ const patientRoutes = require("./routes/patientRoute");
 const swaggerUi = require("swagger-ui-express");
 const swaggerSpec = require("./config/swagger");
 const cors = require("cors");
+const mongoSanitize = require("express-mongo-sanitize");
+const helmet = require("helmet");
+const hpp = require("hpp");
+const limiter = require("./middleware/rateLimiter");
+const morgan = require("morgan");
+const logger = require("./utils/logger");
+const metricsClient = require("./config/metrics");
 
-dotenv.config();
 connectDB();
 
 const app = express();
@@ -16,6 +22,22 @@ const app = express();
 //Middleware
 app.use(cors());
 app.use(express.json());
+app.get("/metrics", async (req, res) => {
+
+  res.set(
+    "Content-Type",
+    metricsClient.register.contentType
+  );
+
+  res.end(
+    await metricsClient.register.metrics()
+  );
+});
+app.use(hpp());
+app.use(morgan("dev"));
+app.use(limiter);
+app.use(helmet());
+app.use(mongoSanitize());
 app.use("/api/v1/auth", authRoutes);
 app.use("/api/v1/patients", patientRoutes);
 app.use("/api-docs", swaggerUi.serve, swaggerUi.setup(swaggerSpec));

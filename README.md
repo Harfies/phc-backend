@@ -1,54 +1,134 @@
-# 🏥 PHC Backend API
+🏥 PHC Backend API
 
-A secure REST API for managing patient records in a Primary Health Care center.
+A secure, production-ready REST API for managing patient records in a Primary Health Care center.
 
-## 🚀 Features
+🚀 Features
+JWT Authentication (Doctor/Nurse)
+Role-Based Access Control (RBAC)
+Patient record management (CRUD)
+File upload support (Lab results, scans)
+Pagination, filtering & search
+Case-insensitive patient queries
+Doctor-only delete permissions
+Redis caching for performance ⚡
+Idempotency support (prevents duplicate requests)
+Swagger API documentation
+PDF export of patient records
+Request validation (Joi)
+Secure logging (Morgan + Winston)
+Prometheus metrics endpoint
+Rate limiting (API protection)
 
-- JWT Authentication (Doctor/Nurse)
-- Patient record management (CRUD)
-- File upload support
-- Pagination & filtering
-- Role-based access (doctor-only delete)
+🛠 Tech Stack
+Node.js
+Express
+MongoDB
+Mongoose
+Redis
+JWT
+Multer
+PDFKit
+Joi
+Morgan
+Winston
+Prometheus Client
+Swagger UI
 
-## 🛠 Tech Stack
-
-- Node.js
-- Express
-- MongoDB
-- Mongoose
-
-## 🔗 Live API
+🔗 Live API
 
 https://phc-backend-4q48.onrender.com/
 
-## 📌 Endpoints
+📌 API Versioning
 
-POST /api/auth/register  
-POST /api/auth/login  
-GET /api/patients  
-POST /api/patients  
-PUT /api/patients/:id  
+All endpoints are versioned:
+
+/api/v1
+
+Example:
+
+/api/v1/auth/register
+/api/v1/auth/login
+/api/v1/patients
+
+📌 Endpoints
+Auth
+POST /api/auth/register
+POST /api/auth/login
+Patients
+GET /api/patients
+POST /api/patients
+PUT /api/patients/:id
 DELETE /api/patients/:id
+GET /api/patients/:id
+GET /api/patients/name/:name
 
-## 🧪 Testing
+⚡ Performance Features
+Redis caching for faster responses
+Cached GET requests for patients
+Automatic cache invalidation on create/update/delete
+Optimized pagination queries
 
-Use Postman to test endpoints with JWT token.
+🛡 Security Features
+JWT authentication
+Helmet security headers
+Input validation (Joi)
+MongoDB sanitization
+HTTP parameter pollution protection
+CORS enabled
+Role-based authorization
 
-## 🔑 How to Test
+📊 Observability
+Morgan HTTP request logging
+Winston file logging (error + combined logs)
+Prometheus /metrics endpoint
 
-1. Register user
-2. Login → get token
-3. Use token in Authorization header
-4. Create patient
+📄 API Documentation
 
-## 🔑 How to Test
+Swagger Docs:
 
-1. Register user
-2. Login → get token
-3. Use token in Authorization header
-4. Create patient
+https://phc-backend-4q48.onrender.com/api-docs
 
-## 📄 API Documentation
+🔑 How to Test
+Register user
+Login → get JWT token
+Add token to headers:
+Authorization: Bearer <token>
+Create patient
+Test filtering, pagination, and search
 
-Live Swagger Docs:
-https://your-app.onrender.com/api-docs
+⚡ Idempotency (Important)
+
+To prevent duplicate requests:
+
+Idempotency-Key: unique-key
+
+Used for safe retries (especially POST requests).
+
+📊 Metrics Endpoint
+GET /metrics
+
+Used for Prometheus monitoring.
+
+📁 Logging
+
+Logs stored in:
+
+/logs/combined.log
+/logs/error.log
+🚀 Deployment
+
+Deployed on Render:
+
+https://phc-backend-4q48.onrender.com/
+
+🔮 Future Improvements
+Docker support
+BullMQ background jobs
+Email notifications
+CI/CD pipeline (GitHub Actions)
+Automated testing (Jest + Supertest)
+Grafana dashboard integration
+👨‍💻 Author
+
+Afeez Akinsola
+Backend Developer | Node.js | Express | MongoDB | System Design

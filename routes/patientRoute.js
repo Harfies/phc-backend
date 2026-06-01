@@ -13,6 +13,7 @@ const { deletePatient } = require("../controllers/patientController");
 const { updatePatient } = require("../controllers/patientController");
 const { deletePatientByName } = require("../controllers/patientController");
 const { updatePatientByName } = require("../controllers/patientController");
+const idempotency = require("../middleware/idempotency");
 
 /**
  * @swagger
@@ -91,13 +92,13 @@ const { updatePatientByName } = require("../controllers/patientController");
  *       - bearerAuth: []
  */
 
-router.post("/", auth, upload.array("files"), createPatient);
+router.post("/", auth, idempotency, upload.array("files"), createPatient);
 router.get("/", auth, getPatients);
 router.get("/:id/export", auth, exportPDF);
-router.get("/name/:name", auth, getPatientByName);
-router.put("/name/:name", auth, updatePatientByName);
+//router.get("/name/:name", auth, getPatientByName);
+//router.put("/name/:name", auth, updatePatientByName);
 router.delete("/name/:name", auth, deletePatientByName);
-router.get("/:id", auth, getPatient);
+//router.get("/:id", auth, getPatient);
 router.delete("/:id", auth, deletePatient);
 router.put("/:id", auth, updatePatient);
 
