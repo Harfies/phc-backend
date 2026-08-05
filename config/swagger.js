@@ -22,7 +22,7 @@ const options = {
     ],
     servers: [
       {
-        url: "https://phc-backend-4q48.onrender.com",
+        url: "https://phc-backend-7l4b.onrender.com",
         description: "Production server",
       },
       {
