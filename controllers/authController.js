@@ -3,58 +3,101 @@ const User = require("../models/user");
 const bcrypt = require("bcryptjs");
 const jwt = require("jsonwebtoken");
 const logger = require("../utils/logger");
+const {
+  registerSchema,
+  loginSchema,
+} = require("../validations/userValidation");
 
 exports.register = async (req, res) => {
   try {
-    const { name, email, password, role } = req.body;
+    // Normalize input
+    if (req.body.email) {
+      req.body.email = req.body.email.trim().toLowerCase();
+    }
 
-    // Normalize email
-    const normalizedEmail = email.toLowerCase().trim();
+    if (req.body.role) {
+      req.body.role = req.body.role.trim().toLowerCase();
+    }
 
-    // Check if user exists
-    const userExists = await User.findOne({ email: normalizedEmail });
+    if (req.body.name) {
+      req.body.name = req.body.name.trim();
+    }
 
-    if (userExists) {
+    // Validate input
+    const { error } = registerSchema.validate(req.body);
+
+    if (error) {
       return res.status(400).json({
-        msg: "Email already registered",
+        success: false,
+        message: error.details[0].message,
       });
     }
 
+    const { name, email, password, role } = req.body;
+
+    // Check if email already exists
+    const existingUser = await User.findOne({ email });
+
+    if (existingUser) {
+      return res.status(409).json({
+        success: false,
+        message: "Email is already registered.",
+      });
+    }
+
+    // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
+    // Create user
     const user = await User.create({
       name,
-      email: normalizedEmail,
+      email,
       password: hashedPassword,
       role,
     });
 
-    return res.status(201).json({
-      message: "User registered successfully",
-      user,
+    // Generate token
+    const token = jwt.sign(
+      {
+        id: user._id,
+        role: user.role,
+      },
+      process.env.JWT_SECRET,
+      {
+        expiresIn: "1d",
+      },
+    );
+
+    logger.info(`New ${role} registered: ${email}`);
+
+    res.status(201).json({
+      success: true,
+      message: "Registration successful.",
+      token,
+      user: {
+        id: user._id,
+        name: user.name,
+        email: user.email,
+        role: user.role,
+      },
     });
-
-    // Log success
-    logger.info(`New user registered: ${user.email}`);
-
-    res.status(201).json(user);
   } catch (error) {
-    // 🔥 Handle duplicate key error (VERY IMPORTANT)
-    if (error.code === 11000) {
-      return res.status(400).json({
-        msg: "Email already exists",
-      });
-    }
-    logger.error(error.message);
-
-    res.status(500).json({
-      msg: "Server error",
-    });
+    next(error);
   }
 };
-
 exports.login = async (req, res) => {
   try {
+    if (req.body.email) {
+      req.body.email = req.body.email.trim().toLowerCase();
+    }
+    const { error } = loginSchema.validate(req.body);
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
     const { email, password } = req.body;
 
     // Check if user exists
@@ -88,19 +131,21 @@ exports.login = async (req, res) => {
       },
     });
   } catch (error) {
-    console.error(error);
-    return res.status(500).json({ msg: "Server error" });
+    next(error);
   }
 };
 
-// Get all users (doctors & nurses)
-exports.getUsers = async (req, res) => {
+exports.getUsers = async (req, res, next) => {
   try {
-    const users = await User.find().select("-password"); // hide password
-    res.json(users);
+    const users = await User.find().select("-password");
+
+    res.status(200).json({
+      success: true,
+      count: users.length,
+      data: users,
+    });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error" });
+    next(error);
   }
 };
 
@@ -115,7 +160,6 @@ exports.deleteUser = async (req, res) => {
 
     res.json({ msg: "User deleted successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error" });
+    next(error);
   }
 };

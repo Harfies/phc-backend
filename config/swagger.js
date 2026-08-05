@@ -1,4 +1,3 @@
-// Swagger configuration
 const swaggerJsDoc = require("swagger-jsdoc");
 
 const options = {
@@ -82,7 +81,7 @@ const options = {
       },
     ],
   },
-  apis: ["./routes/*.js"], // where your docs will be
+  apis: ["./routes/*.js"],
 };
 
 const swaggerSpec = swaggerJsDoc(options);

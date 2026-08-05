@@ -1,33 +1,19 @@
-// Handles patient caching logic
-
 const redisClient = require("../config/redis");
 
-// Get cached patients
-const getCachedPatients = async () => {
-  const cachedPatients = await redisClient.get("patients");
+const clearPatientCache = async () => {
+  try {
+    const keys = await redisClient.keys("patients:*");
 
-  // If cache exists
-  if (cachedPatients) {
-    return JSON.parse(cachedPatients);
+    if (keys.length > 0) {
+      await redisClient.del(keys);
+
+      console.log(`🧹 Cleared ${keys.length} patient cache key(s).`);
+    }
+  } catch (error) {
+    console.error("Redis cache clear error:", error.message);
   }
-
-  return null;
-};
-
-// Store patients in Redis cache
-const setCachedPatients = async (patients) => {
-  await redisClient.set(
-    "patients",
-
-    JSON.stringify(patients),
-
-    {
-      EX: 60, // expires after 60 seconds
-    },
-  );
 };
 
 module.exports = {
-  getCachedPatients,
-  setCachedPatients,
+  clearPatientCache,
 };

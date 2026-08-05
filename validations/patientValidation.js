@@ -1,5 +1,3 @@
-// Joi schema for validating patient input data
-
 const Joi = require("joi");
 
 // Patient validation schema
@@ -26,4 +24,17 @@ const patientSchema = Joi.object({
   notes: Joi.string().allow(""),
 });
 
-module.exports = patientSchema;
+// Update Patient (all fields optional)
+const updatePatientSchema = Joi.object({
+  name: Joi.string(),
+  age: Joi.number(),
+  gender: Joi.string(),
+  diagnosis: Joi.string(),
+  treatment: Joi.string(),
+  notes: Joi.string().allow(""),
+}).min(1);
+
+module.exports = {
+  patientSchema,
+  updatePatientSchema,
+};

@@ -1,18 +1,28 @@
 // handle patient record operations
 const Patient = require("../models/patient");
 const PDFDocument = require("pdfkit");
-const { patientSchema } = require("../validations/patientValidation");
-const logger = require("../utils/logger");
-const redisClient = require("../config/redis");
 const {
-  getCachedPatients,
-  setCachedPatients,
-} = require("../cache/patientCache");
+  patientSchema,
+  updatePatientSchema,
+} = require("../validations/patientValidation");
+const logger = require("../utils/logger");
+const AppError = require("../utils/AppError");
+const redisClient = require("../config/redis");
+const { clearPatientCache } = require("../cache/patientCache");
 
 // create patient record
 
-exports.createPatient = async (req, res) => {
+exports.createPatient = async (req, res, next) => {
   try {
+    // Normalize input
+    if (req.body.gender) {
+      req.body.gender = req.body.gender.trim().toLowerCase();
+    }
+
+    if (req.body.name) {
+      req.body.name = req.body.name.trim();
+    }
+
     // Validate request body
     const { error } = patientSchema.validate(req.body);
 
@@ -29,218 +39,178 @@ exports.createPatient = async (req, res) => {
     // Create patient
     const patient = await Patient.create({
       ...req.body,
-      attachments: files || [],
+      attachments: files,
     });
 
-    // 🧹 Clear old cache
-    await redisClient.del("patients");
+    // Clear patient cache
+    await clearPatientCache();
 
-    // Log event
     logger.info(`Patient created: ${patient.name}`);
 
-    res.status(201).json(patient);
-  } catch (error) {
-    logger.error(error.message);
-
-    res.status(500).json({
-      msg: "Server error",
+    res.status(201).json({
+      success: true,
+      message: "Patient created successfully",
+      data: patient,
     });
+  } catch (error) {
+    next(error);
   }
 };
 
-// get patients with pagination + filter + Redis caching
+// Get all patients with pagination, search, filtering and Redis caching
 
 exports.getPatients = async (req, res) => {
   try {
-    const { page = 1, limit = 10, name, date, gender, diagnosis } = req.query;
+    const { page = 1, limit = 10, name, gender, diagnosis, date } = req.query;
 
-    // Convert pagination values
-    const pageNumber = parseInt(page);
+    const pageNumber = Math.max(parseInt(page) || 1, 1);
+    const limitNumber = Math.max(parseInt(limit) || 10, 1);
 
-    const limitNumber = parseInt(limit);
+    const query = {};
 
-    // Build MongoDB query
-    let query = {};
-
-    // Search by patient name
+    // Search patient by name (case-insensitive)
     if (name) {
-      query.name = new RegExp(name, "i");
+      query.name = {
+        $regex: name,
+        $options: "i",
+      };
     }
 
-    // Search by date
-    if (date) {
-      query.dateOfVisit = new Date(date);
-    }
-
-    // Filter gender
+    // Filter by gender
     if (gender) {
       query.gender = gender.toLowerCase();
     }
 
-    // Filter diagnosis
+    // Filter by diagnosis
     if (diagnosis) {
-      query.diagnosis = new RegExp(diagnosis, "i");
+      query.diagnosis = {
+        $regex: diagnosis,
+        $options: "i",
+      };
     }
 
-    // Create unique cache key
+    // Filter by visit date
+    if (date) {
+      const start = new Date(date);
+      const end = new Date(date);
+
+      end.setDate(end.getDate() + 1);
+
+      query.dateOfVisit = {
+        $gte: start,
+        $lt: end,
+      };
+    }
+
     const cacheKey = `patients:${JSON.stringify(req.query)}`;
 
-    // 1. Check Redis cache
-    const cachedPatients = await redisClient.get(cacheKey);
+    const cachedData = await redisClient.get(cacheKey);
 
-    // Return cached data if available
-    if (cachedPatients) {
+    if (cachedData) {
       return res.status(200).json({
         source: "redis-cache",
-
-        ...JSON.parse(cachedPatients),
+        ...JSON.parse(cachedData),
       });
     }
 
-    // Count total patients
     const total = await Patient.countDocuments(query);
 
-    // Fetch patients
     const patients = await Patient.find(query)
-
+      .sort({ createdAt: -1 })
       .skip((pageNumber - 1) * limitNumber)
+      .limit(limitNumber);
 
-      .limit(limitNumber)
-
-      .sort({ createdAt: -1 });
-
-    // Response object
-    const responseData = {
+    const response = {
       source: "mongodb",
-
       total,
-
       page: pageNumber,
-
       pages: Math.ceil(total / limitNumber),
-
       count: patients.length,
-
       data: patients,
     };
 
-    // 2. Store response in Redis
-    await redisClient.set(
-      cacheKey,
-
-      JSON.stringify(responseData),
-
-      {
-        EX: 60, // expires after 60 seconds
-      },
-    );
-
-    // Return MongoDB data
-    res.status(200).json(responseData);
-  } catch (error) {
-    logger.error(error.message);
-
-    res.status(500).json({
-      msg: "Server error",
-    });
-  }
-};
-/*
-// get single patient
-exports.getPatient = async (req, res) => {
-  const patient = await Patient.findById(req.params.id);
-  res.json(patient);
-};
-
-// Get patient by name
-exports.getPatientByName = async (req, res) => {
-  try {
-    const patient = await Patient.find({
-      name: new RegExp(req.params.name, "i"), // case-insensitive search
+    await redisClient.set(cacheKey, JSON.stringify(response), {
+      EX: 60,
     });
 
-    if (patient.length === 0) {
-      return res.status(404).json({ msg: "No patient found" });
-    }
-
-    res.json(patient);
+    res.status(200).json(response);
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error" });
+    next(error);
   }
-};*/
+};
 
 // Delete patient
+// Delete patient by ID (Doctor only)
 exports.deletePatient = async (req, res) => {
   try {
+    // Only doctors can delete patients
+    if (req.user.role !== "doctor") {
+      return next(new AppError("Only doctors can delete patients", 403));
+    }
+
     const patient = await Patient.findByIdAndDelete(req.params.id);
 
     if (!patient) {
-      return res.status(404).json({ msg: "Patient not found" });
+      return next(new AppError("Patient not found", 404));
     }
-    await redisClient.flushAll();
-    res.json({ msg: "Patient deleted successfully" });
+
+    // Clear patient cache
+    await clearPatientCache();
+
     logger.warn(`Patient deleted: ${patient.name}`);
-  } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error" });
-  }
-};
 
-// Delete patient by name (doctor only)
-exports.deletePatientByName = async (req, res) => {
-  try {
-    // 🔐 Only doctor can delete
-    if (req.user.role !== "doctor") {
-      return res.status(403).json({ msg: "Only doctors can delete patients" });
-    }
-
-    const patient = await Patient.findOneAndDelete({
-      name: new RegExp(req.params.name, "i"),
+    res.status(200).json({
+      success: true,
+      message: "Patient deleted successfully",
     });
-
-    if (!patient) {
-      return res.status(404).json({ msg: "Patient not found" });
-    }
-
-    // clear cache
-    await redisClient.flushAll();
-
-    res.json({ msg: "Patient deleted successfully" });
   } catch (error) {
-    console.error(error);
-    res.status(500).json({ msg: "Server error" });
+    next(error);
   }
 };
 
-// Update patient
-
+// Update patient by ID
 exports.updatePatient = async (req, res) => {
   try {
+    // Validate request body
+    const { error } = updatePatientSchema.validate(req.body, {
+      allowUnknown: true,
+    });
+
+    if (error) {
+      return res.status(400).json({
+        success: false,
+        message: error.details[0].message,
+      });
+    }
+
     const updatedPatient = await Patient.findByIdAndUpdate(
       req.params.id,
       req.body,
-      { new: true },
+      {
+        new: true,
+        runValidators: true,
+      },
     );
 
     if (!updatedPatient) {
       return res.status(404).json({
-        msg: "Patient not found",
+        success: false,
+        message: "Patient not found",
       });
     }
 
-    // 🧹 Clear patients cache
-    await redisClient.flushAll();
+    // Clear patient cache
+    await clearPatientCache();
 
     logger.info(`Patient updated: ${updatedPatient.name}`);
 
-    res.json(updatedPatient);
-  } catch (error) {
-    logger.error(error.message);
-
-    res.status(500).json({
-      msg: "Server error",
+    res.status(200).json({
+      success: true,
+      message: "Patient updated successfully",
+      data: updatedPatient,
     });
+  } catch (error) {
+    next(error);
   }
 };
 

@@ -6,8 +6,8 @@ const idempotency = async (req, res, next) => {
   try {
     const key = req.headers["idempotency-key"];
 
-    if (key) {
-      return next;
+    if (!key) {
+      return next();
     }
 
     const cachedResponse = await redis.get(`idem:${key}`);
@@ -19,7 +19,7 @@ const idempotency = async (req, res, next) => {
     const originalJson = res.json;
 
     res.json = function (body) {
-      redisClient.set(`idem:${key}`, JSON.stringify(body), {
+      redis.set(`idem:${key}`, JSON.stringify(body), {
         EX: 60 * 60,
       });
 

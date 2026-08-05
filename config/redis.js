@@ -1,22 +1,24 @@
-// Redis connection configuration
+const { createClient } = require("redis");
 
-const redis = require("redis");
-
-console.log("REDIS URL:", process.env.REDIS_URL);
-
-// Create Redis client
-const redisClient = redis.createClient({
-  url: process.env.REDIS_URL,
+const redisClient = createClient({
+  username: process.env.REDIS_USERNAME,
+  password: process.env.REDIS_PASSWORD,
+  socket: {
+    host: process.env.REDIS_HOST,
+    port: Number(process.env.REDIS_PORT),
+  },
 });
 
-// Connect to Redis
+redisClient.on("error", (err) => {
+  console.error("Redis Client Error:", err);
+});
+
 (async () => {
   try {
     await redisClient.connect();
-
     console.log("✅ Redis connected");
-  } catch (error) {
-    console.error("❌ Redis connection error:", error);
+  } catch (err) {
+    console.error("❌ Redis connection error:", err);
   }
 })();
 
