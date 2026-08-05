@@ -86,7 +86,7 @@ Prometheus /metrics endpoint
 
 Swagger Docs:
 
-https://phc-backend-4q48.onrender.com/api-docs
+https://phc-backend-7l4b.onrender.com/api-docs
 
 🔑 How to Test
 Register user
@@ -119,7 +119,7 @@ Logs stored in:
 
 Deployed on Render:
 
-https://phc-backend-4q48.onrender.com/
+https://phc-backend-7l4b.onrender.com
 
 🔮 Future Improvements
 Docker support
