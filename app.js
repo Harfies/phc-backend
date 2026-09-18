@@ -17,7 +17,19 @@ const metricsClient = require("./config/metrics");
 const app = express();
 
 //Middleware
-app.use(cors());
+
+app.use(
+  cors({
+    origin: [
+      "http://localhost:3000",
+      // Add your deployed Next.js frontend URL here later
+    ],
+
+    methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
+
+    allowedHeaders: ["Content-Type", "Authorization"],
+  }),
+);
 app.use(express.json());
 app.get("/metrics", async (req, res) => {
   res.set("Content-Type", metricsClient.register.contentType);
