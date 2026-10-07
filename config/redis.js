@@ -13,13 +13,16 @@ redisClient.on("error", (err) => {
   console.error("Redis Client Error:", err);
 });
 
-(async () => {
-  try {
-    await redisClient.connect();
-    console.log("✅ Redis connected");
-  } catch (err) {
-    console.error("❌ Redis connection error:", err);
-  }
-})();
+redisClient.on("connect", () => {
+  console.log("Connecting to Redis...");
+});
+
+redisClient.on("ready", () => {
+  console.log("Redis connected successfully");
+});
+
+redisClient.on("reconnecting", () => {
+  console.log("Redis reconnecting...");
+});
 
 module.exports = redisClient;

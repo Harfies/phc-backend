@@ -1,6 +1,5 @@
 require("dotenv").config();
 const express = require("express");
-const connectDB = require("./config/db");
 const authRoutes = require("./routes/authRoute");
 const patientRoutes = require("./routes/patientRoute");
 const swaggerUi = require("swagger-ui-express");
@@ -20,14 +19,13 @@ const app = express();
 
 app.use(
   cors({
-    origin: [
-      "http://localhost:3000",
-      // Add your deployed Next.js frontend URL here later
-    ],
+    origin: "http://localhost:3000",
 
     methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
     allowedHeaders: ["Content-Type", "Authorization"],
+
+    optionsSuccessStatus: 204,
   }),
 );
 app.use(express.json());
