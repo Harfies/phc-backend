@@ -36,8 +36,7 @@ Swagger UI
 
 🔗 Live API
 
-https://phc-backend-fqt7.onrender.com
-
+https://phc-backend-v9mb.onrender.com 
 📌 API Versioning
 
 All endpoints are versioned:
@@ -86,7 +85,7 @@ Prometheus /metrics endpoint
 
 Swagger Docs:
 
-https://phc-backend-fqt7.onrender.com/api-docs/
+https://https://phc-backend-v9mb.onrender.com/api-docs/
 
 🔑 How to Test
 Register user

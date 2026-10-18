@@ -59,7 +59,7 @@ exports.createPatient = async (req, res, next) => {
 
 // Get all patients with pagination, search, filtering and Redis caching
 
-exports.getPatients = async (req, res) => {
+exports.getPatients = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, name, gender, diagnosis, date } = req.query;
 
@@ -141,7 +141,7 @@ exports.getPatients = async (req, res) => {
 
 // Delete patient
 // Delete patient by ID (Doctor only)
-exports.deletePatient = async (req, res) => {
+exports.deletePatient = async (req, res, next) => {
   try {
     // Only doctors can delete patients
     if (req.user.role !== "doctor") {
@@ -169,7 +169,7 @@ exports.deletePatient = async (req, res) => {
 };
 
 // Update patient by ID
-exports.updatePatient = async (req, res) => {
+exports.updatePatient = async (req, res, next) => {
   try {
     // Validate request body
     const { error } = updatePatientSchema.validate(req.body, {
@@ -214,18 +214,34 @@ exports.updatePatient = async (req, res) => {
   }
 };
 
-//EXPORT PDF
+// Export patient record as PDF
+exports.exportPDF = async (req, res, next) => {
+  try {
+    const patient = await Patient.findById(req.params.id);
 
-exports.exportPDF = async (req, res) => {
-  const patient = await Patient.findById(req.params.id);
+    if (!patient) {
+      return res.status(404).json({
+        success: false,
+        message: "Patient not found",
+      });
+    }
 
-  const doc = new PDFDocument();
-  res.setHeader("Content-Type", "application/pdf");
+    const doc = new PDFDocument();
 
-  doc.text(`Name: ${patient.name}`);
-  doc.text(`Diagnosis: ${patient.diagnosis}`);
-  doc.text(`Treatment: ${patient.treatment}`);
+    res.setHeader("Content-Type", "application/pdf");
+    res.setHeader(
+      "Content-Disposition",
+      `attachment; filename="patient-${patient._id}.pdf"`,
+    );
 
-  doc.pipe(res);
-  doc.end();
+    doc.pipe(res);
+
+    doc.text(`Name: ${patient.name}`);
+    doc.text(`Diagnosis: ${patient.diagnosis}`);
+    doc.text(`Treatment: ${patient.treatment}`);
+
+    doc.end();
+  } catch (error) {
+    next(error);
+  }
 };
